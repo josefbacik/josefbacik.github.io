@@ -79,7 +79,7 @@ not super interesting or flashy, but solid work nonetheless.
   splat free (at least until I change all the locking again).
 - My data reservation ticketing rework.  All btrfs metadata reservations use a
   ticketing infrastructure to make sure the space reservation is FIFO, but data
-  was still a "whoever wins the race gets the resrevation."  This generally was
+  was still a "whoever wins the race gets the reservation."  This generally was
   OK because data reservation to usage is generally 1:1, unlike metadata.
   However if we did need to flush at all then you could end up with early ENOSPC
   in a few corner cases.  This rework eliminates that class of issues, and makes
