@@ -5,7 +5,7 @@ date: 2020-09-11 11:19:00 -0400
 categories: kernel btrfs
 ---
 # tl;dr
-- Fedora Workstation and all of it's descendants are switching to btrfs by
+- Fedora Workstation and all of its descendants are switching to btrfs by
   default, hooray!
 - The core btrfs team is organizing more under
   [Github](https://github.com/btrfs).
@@ -68,8 +68,8 @@ not super interesting or flashy, but solid work nonetheless.
   with seed devices.  These cleanups enable us to make some other changes in a
   cleaner way.
 - Anand Jain fixed a bunch of issues with seed devices and initializing them in
-  a few of the lesser used configurations.  This rework was enabled by Nikola's
-  work.
+  a few of the lesser used configurations.  This rework was enabled by
+  Nikolay's work.
 - Qu Wenruo continues to chip away at different qgroup accounting issues, as
   well as some error handling fixes.
 - My prep work for reworking the tree node locking has gone in.  The actual tree
