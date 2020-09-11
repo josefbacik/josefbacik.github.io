@@ -15,7 +15,7 @@ categories: kernel btrfs
 
 # Fedora
 
-Chris Murphy and Neal Goompa have done an excellent job driving btrfs adoption
+Chris Murphy and Neal Gompa have done an excellent job driving btrfs adoption
 with Fedora, and decided to kick it up a notch for Fedora 33 by switching to
 btrfs as the default file system for the Fedora Workstation spin and all of its
 descendants.  Community work is a long an arduous job, and they've both done
