@@ -9,7 +9,7 @@ categories: kernel btrfs
   default, hooray!
 - The core btrfs team is organizing more under
   [Github](https://github.com/btrfs).
-- Developemnt update.
+- Development update.
 - I'm going to attempt to be more communicative about what we as the btrfs
   community are up to development wise and priority wise.
 
