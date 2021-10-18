@@ -108,13 +108,13 @@ initially git was broken and I couldn't download anything.  However it has been
 working great for me for a few weeks
 
 `lei` is a tool that can interface with
-(lore.kernel.org)[https://lore.kernel.org/] in order to download email from any
+[lore.kernel.org](https://lore.kernel.org/) in order to download email from any
 of the lists you care about.  I'd highly recommend reading the slides
-(here)[https://linuxplumbersconf.org/event/11/contributions/983/attachments/759/1421/Doing%20more%20with%20lore%20and%20b4.pdf]
+[here](https://linuxplumbersconf.org/event/11/contributions/983/attachments/759/1421/Doing%20more%20with%20lore%20and%20b4.pdf)
 from Konstantin Ryabitsev, starting around slide 23 for the `lei` specific bits.
 
 You can use this tool to setup a query using lore's built in query language,
-(described here)[https://lore.kernel.org/linux-btrfs/_/text/help/], in order to
+[described here](https://lore.kernel.org/linux-btrfs/_/text/help/), in order to
 customize your query to your particular tastes.  For myself, I did the following
 
 ```
