@@ -1,0 +1,241 @@
+---
+layout: post
+title: "Using `lei`, `b4`, and `mutt` to do kernel development"
+date: 2021-10-18 10:45:00 -0400
+categories: kernel
+---
+# tl;dr
+- Use
+  [`b4`](https://people.kernel.org/monsieuricon/introducing-b4-and-patch-attestation)
+  to apply random patches locally for patch review.
+- Use [`lei`](https://public-inbox.org/INSTALL.html) to pull down emails and
+  pathces you care about for all linux kernel mailinglists locally.
+- Use [`mutt`](http://www.mutt.org/) to read that email and respond.
+- Use [`msmtp`](http://www.mutt.org/) for sending email using your email
+  server's settings.
+
+# I hate our email based development model
+
+There I said it.  I've been doing this for 15 years and it sucks.  I'm prone to
+putting my head down on problems and not looking at anything outside of that
+problem for days to weeks.  When I look back at the mailinglists that I care
+about I've got hundreds of emails with tens to hundreds of patches that may or
+may not need my attention.  We have a general problem with tracking the status
+of patches, and we've done some work in that regard with btrfs to help change
+that by instituting a GitHub based workflow to track patch status, but not
+everybody uses this.
+
+In addition to being impossible to keep track of what's going on and what's
+important with so much email, there's the fact that configuring a mail client to
+be linux mailinglist friendly is complete and utter bullshit.  Thunderbird
+requires 15 different settings to be set just right in order to do the plaintext
+thing correctly, but still fucks up word wrapping for anybody not using
+Thunderbird.  Claws is better in this regard, however there's the second large
+problem, the email itself.
+
+My setup is Gmail, and I'm subscribed to the main lists I care about as well as
+a few others.  Over the years I've got labels with 100's of thousands of emails.
+Do you know what claws does when I open it and set it up for the first time on a
+new machine?  It hangs for 30 minutes to an hour while it chews through all
+those headers.  Thunderbird is less shitty, but you can't access any folders
+while it's syncing.  I then have to go through the client to unsubscribe to any
+folders I don't care to see new emails for, and even then opening the
+"linux-btrfs" label if I've been gone for a few weeks takes minutes to sync and
+update.
+
+# Uh so why don't you use `offlineimap` and `mutt`??
+
+This would be a reasonable solution, but again maybe I'm stupid, but I'm
+subscribed to a lot of high volume lists.  My poor hard drive would be dead
+after a year of running `offlineimap`.  In addition to that I'm often not on the
+same machine, between my work laptop, personal laptop, various development
+machines, having a single place where my email goes simply isn't practical.  I
+used to configure `mutt` to use imap and connect to Gmail directly, but gmail
+has gone out of their way to make imap as shitty as possible, I would run into
+weird sync'ing problems when I tried to delete things, changing labels was a
+nightmare, and new emails would re-order my email while I was looking for
+things.  It was death by 1000 cuts, eventually the frustration of dealing with
+these little annoying things daily took their toll and I simply abandoned the
+setup.
+
+# This still sounds like a personal problem?
+
+It is, but let's look at what we're trying to accomplish here
+
+1. Apply patches to a tree to test, review, etc.
+2. Reply to patches with a review or respond to reviews of your own patches.
+3. Engage in technical discussion with your fellow developers.
+
+For 1 this tends to be on a different machine than the one you're viewing the
+patch on.  That means you're downloading an email, `scp`'ing it to another
+machine, and applying it.
+
+For 2 and 3 these are more normal email client style workflows where `mutt`
+works well, but all of the downsides of imap hurt us.
+
+# Enter `b4`, a glorious solution to problem #1
+
+I've been using `b4` for almost a year, and it is glorious.  A fair bit of my
+time is devoted to patch review, so YMMV on how useful `b4` is to you, but if
+you do any review at all it's perfection.  All you need is the `Message-ID` of
+the patch or patch series, and then you can use `b4` to download the whole thing
+locally to an `.mbox` file to apply to your tree.  You can simply run
+
+```
+b4 am <message-id>
+```
+
+and watch as it goes and finds all of the patches, applies any `Reviewed-by`'s
+and dumps it to a local `.mbox` file.  If you are like me and want to get
+straight to the review part of the workflow, you can simply run
+
+```
+b4 am -o - <message-id> | git am
+```
+
+and it'll download and apply the series to your local tree.
+
+No more saving and copying around emails, just point it at a `Message-ID` and
+go.  For Thunderbird there is a handy extension that gives you a `Copy
+Message-id` button on the email window, so you can click on the patch you care
+about, click the button, and then paste it into your terminal to quickly apply
+patch series.
+
+# Using `lei` so you can unsubscribe from every mailinglist
+
+Admittedly this part is new and has some rough edges.  When I tried to do this
+initially git was broken and I couldn't download anything.  However it has been
+working great for me for a few weeks
+
+`lei` is a tool that can interface with
+(lore.kernel.org)[https://lore.kernel.org/] in order to download email from any
+of the lists you care about.  I'd highly recommend reading the slides
+(here)[https://linuxplumbersconf.org/event/11/contributions/983/attachments/759/1421/Doing%20more%20with%20lore%20and%20b4.pdf]
+from Konstantin Ryabitsev, starting around slide 23 for the `lei` specific bits.
+
+You can use this tool to setup a query using lore's built in query language,
+(described here)[https://lore.kernel.org/linux-btrfs/_/text/help/], in order to
+customize your query to your particular tastes.  For myself, I did the following
+
+```
+lei q -o ~/Mail/overlay -I https://lore.kernel.org/all
+    -t 'dfn:fs/btrfs/* OR s:btrfs-progs OR dfn:drivers/block/nbd.c OR
+        tc:josef@toxicpanda.com) AND rt:1.month.ago..'
+```
+
+This gives me any patch that touches `fs/btrfs`, anything with the subject that
+matches `btrfs-progs`, anything that touches `drivers/block/nbd.c`, and then
+anything that I'm a direct recipient of.  And I only go back a month.
+
+Every morning I simply run
+
+```
+lei up ~/Mail/overlay
+```
+
+and that pulls down anything new that matches my query.
+
+With this I don't have to subscribe to any mailinglist, I'm always getting the
+emails I may care about, and I can stop filling up my gmail quota with emails I
+never look at.
+
+If there's some new email thread that I should be paying attention to or
+something I forgot to include, I can run
+
+```
+lei edit-search ~/Mail/overlay
+```
+
+and adjust the query as necessary.  For example I forgot to include NBD patches
+in my initial query, so I added that to my list.  You may need to delete the
+section
+
+```
+[external "https://lore.kernel.org/all/"]
+        lastresult = 1634566664
+```
+
+if you add new things so that it'll pull any patches in your specified age
+range, which I needed to do to pull some older NBD patches that I needed to
+review.
+
+# Configuring `mutt`
+
+I have exceedingly little patience for messing with tools.  I want to do my work
+and not touch anything.  My `.muttrc` from 10 years ago was a sight to behold,
+macros and color changes and UI tweaks, a complete masterpiece.  I have no idea
+where that thing has gone, and I couldn't tell you what a majority of those
+settings did today.
+
+I want simplicity, I want to be able to look at what requires my attention,
+respond if I need to, ignore it if I don't.  I like `mutt` but configuring it
+gives me heartburn.  To that end I wrote up a basic `.muttrc` that uses the
+`lei` setup, and incorporates the settings I care about with comments about what
+each section does so you can take and leave the parts of it you care about.
+
+```
+# Configure mutt to read from the lei maildir inbox
+set mbox_type=Maildir
+set folder="~/Mail/overlay"
+set mbox="~/Mail/overlay"
+set record="+.Sent"
+set postponed="+.Drafts"
+set spoolfile="~/Mail/overlay"
+
+# Sort by threads so I can see wtf is going on
+set sort="threads"
+set strict_threads="yes"
+set sort_browser="reverse-date"
+set sort_aux="last-date-received"
+set collapse_unread="yes"
+
+# Lets me collapse fucking everything
+bind index = collapse-all
+bind index - collapse-thread
+
+# Show Message-Id in the window
+unignore Message-Id:
+
+# Use msmtp to send email
+set sendmail = "/usr/bin/msmtp"
+set realname = "Josef Bacik"
+set from = "josef@toxicpanda.com"
+set use_from = "yes"
+set envelope_from = "yes"
+
+# Use vim as my editor
+set editor = "vim"
+
+# Show the headers in the compose view
+set edit_headers = "yes"
+
+# Load my aliases
+source ~/.mailrc
+```
+
+A nice, straightforward `.muttrc` that gets the job done.  There are some other
+things I may tweak, but by-in-large this lets me do the job of replying to
+emails without making me want to throw my laptop.
+
+# Configuring `msmtp`
+
+Everybody should be using `msmtp`.  I've used it for years with `git
+send-email`, it's easy to configure and simply works.  You drop in a `.msmtprc`
+and point your tool at `/usr/bin/mstmp` and your job is done.  My `.msmtprc`
+hasn't changed in years except to update the password of my gmail account.  You
+can find lots of examples to tie in keychains for GNOME, KDE, and even OSX.  You
+can even skip adding the password to the config file and msmtp will prompt you
+for it when you try to send email.  Simply google for how to set it up for your
+particular email setup and go from there, it's very straightforward.
+
+# No more linux kernel email to my inbox!
+
+With this workflow in place I unsubscribed from all of my linux kernel
+mailinglists and deleted all of my archives.  Patch review is a breeze and
+replying to emails via `mutt` with my stripped down Maildir is so much more
+pleasant.  I really hope that one day we'll move to a more modern development
+model, one where we stop losing patches to the massive volume of email and
+reviewers can easily find patches that need to be reviewed without needing to
+dig through hundreds of emails to figure out what they've missed.  This however
+gets me 80% of the way there, and frankly is good enough to keep me from
+quitting kernel development for the time being.
