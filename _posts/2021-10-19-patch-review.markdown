@@ -150,20 +150,20 @@ setup on your repository.  These check a few things
    the commit message.
 2. `pre-applypatch` and `pre-commit`.  This is what we run before we commit or
    apply the patch.  For our hook we do a few things.
-  1. Build the code.  This is very useful for patch series, because maybe the
-     whole series builds, but an individual patch in the middle doesn't.  The
-     patch reviewer can catch these problems because the tree will be built
-     after every patch is applied.
-  2. Run `checkpatch.pl`.  Every kernel developer has something bad to say about
-     this script, but it is handy for catching basic problems.  This can be
-     especially good for new developers to avoid simple mistakes before
-     submitting patches.  For btrfs we have the things we don't care about
-     turned off, and we have a local copy so any upstream changes don't break
-     our workflow.
-  3. Run the `kernel-doc` checker.  We all forget the format for kernel-doc, so
-     this makes sure we did the correct thing.  This has the same caveat as
-     `checkpatch.pl` in that sometimes it complains when it shouldn't, but is a
-     good sanity checker in general.
+    1. Build the code.  This is very useful for patch series, because maybe the
+       whole series builds, but an individual patch in the middle doesn't.  The
+       patch reviewer can catch these problems because the tree will be built
+       after every patch is applied.
+    2. Run `checkpatch.pl`.  Every kernel developer has something bad to say about
+       this script, but it is handy for catching basic problems.  This can be
+       especially good for new developers to avoid simple mistakes before
+       submitting patches.  For btrfs we have the things we don't care about
+       turned off, and we have a local copy so any upstream changes don't break
+       our workflow.
+    3. Run the `kernel-doc` checker.  We all forget the format for kernel-doc, so
+       this makes sure we did the correct thing.  This has the same caveat as
+       `checkpatch.pl` in that sometimes it complains when it shouldn't, but is a
+       good sanity checker in general.
 
 This set of automation is beneficial for the review and submitter alike.  It
 keeps basic mistakes from being made, and it catches basic mistakes without the
