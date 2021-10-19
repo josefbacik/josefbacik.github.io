@@ -55,7 +55,7 @@ you should be checking that are just as important to a code review.
    patches not apply.  Usually there is a common base branch that everybody in a
    project works from, so at least validating that the patch applies is super
    important.  I will never stop plugging
-   [`b4`]((https://people.kernel.org/monsieuricon/introducing-b4-and-patch-attestation)
+   [`b4`](https://people.kernel.org/monsieuricon/introducing-b4-and-patch-attestation)
    for this, it is invaluable to me.
 2. Does it build?  Again, sanity checks are important.  Often people will simply
    look at the patch in their mail client and add their Reviewed-by without
