@@ -82,7 +82,7 @@ you're going to adhere to these specific rules.  For example if I get a single
 patch from any of the core developers on btrfs and it's a few lines, I'll
 sometimes skip step 1 and 2 because I know they likely did the correct thing.
 
-# `git show`, `git reveiw`, and `git series-review`
+# Using `git show`, `git reveiw`, and `git series-review`
 
 These all serve a different purpose.  `git series-review` is simply doing the
 `git show` and `git review` for all patches in a series, so mechanically is the
