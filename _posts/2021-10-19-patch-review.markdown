@@ -103,14 +103,6 @@ patch, which since I use `vim` I have defined in my `.gitconfig` as
         tool = vimdiff
 ```
 
-This gives   It uses `git difftool` on the patch, which since I use `vim` I have
-defined in my `.gitconfig` as
-
-```
-[diff]
-        tool = vimdiff
-```
-
 This gives me a side-by-side view of every change this patch makes in the code
 context.  This is exceedingly valuable in code reviews, because it allows you to
 go directly to the change, see how it looks in the code and validate any
