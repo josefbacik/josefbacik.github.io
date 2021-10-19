@@ -29,7 +29,7 @@ $ git review
 $ git series-review <hash of the first patch in the series>
 ```
 
-# Why we do patch review?
+# Why we do patch review
 
 We all have things we check when reviewing patches.  Some of us have spent a lot
 of time fixing locking problems, so we pay close attention to any locking.  Some
