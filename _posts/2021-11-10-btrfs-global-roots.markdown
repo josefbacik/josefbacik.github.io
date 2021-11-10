@@ -82,7 +82,7 @@ Assuming the extent tree has a height of 3, that's 5 blocks that are COW'ed to
 update two adjacent block groups.  In the block group tree case they'll be in
 the same leaf, and thus will get 2 blocks COW'ed instead.
 
-This will drastically increase the mount times for very large file systems, and
+This will drastically reduce the mount times for very large file systems, and
 generally reduce write amplification.
 
 # Solution #2: Multiple global roots
