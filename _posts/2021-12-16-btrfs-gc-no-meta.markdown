@@ -6,10 +6,10 @@ categories: kernel btrfs extent-tree-v2
 ---
 # tl;dr
 
-Read part 1 [here]({% post_url 2021-11-10-btrfs-global-roots.markdown %})
+Read part 1 [here]({% post_url 2021-11-10-btrfs-global-roots %})
 
 If you are a masochist you can read [this]({% post_url
-2021-12-16-btrfs-extent-reference-counting.markdown %}) which describes how our
+2021-12-16-btrfs-extent-reference-counting %}) which describes how our
 reference counting works which will explain why we're making some of these
 changes.
 
