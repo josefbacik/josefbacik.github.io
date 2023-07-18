@@ -82,10 +82,10 @@ whole host of annoying problems.
   doesn't do the appropriate signing or anything, so you have to disable secure
   boot to get these things to work.  This required using the options
 
-```
---xml ./os/firmware/feature/@enabled=no
---xml ./os/firmware/feature/@name=secure-boot
-```
+  ```
+  --xml ./os/firmware/feature/@enabled=no
+  --xml ./os/firmware/feature/@name=secure-boot
+  ```
   with `virt-installer` do make sure secure boot was disabled.
 - **User session will not work, don't bother.** We try to be nice and secure and
   not run things as root, unfortunately this appears to be completely untested
@@ -101,9 +101,9 @@ whole host of annoying problems.
 - **Live attaching `virtiofs` to VMs sometimes doesn't work.**  This I'm not
   necessarily going to lay at libvirts feet, because it works fine with x86 but
   not with ARM64.  I ended up having to attach the build directory to the VM with
-```
-sudo virsh attach-device $VM_NAME --config <hand crafted xml file>
-```
+  ```
+  sudo virsh attach-device $VM_NAME --config <hand crafted xml file>
+  ```
   and then shut the VM down and bring it back up, mount the directory in the vm,
   build and install the kernel and reboot.  You can detach it live, but you
   cannot attach it live.
@@ -111,9 +111,9 @@ sudo virsh attach-device $VM_NAME --config <hand crafted xml file>
   to just run `make modules_install && make install && reboot` and boot into the
   new kernel.  Unfortunately Fedora doesn't do this by default, you have to make
   sure to do
-```
-echo 'UPDATEDEFAULT=yes"' > /etc/sysconfig/kernel
-```
+  ```
+  echo 'UPDATEDEFAULT=yes"' > /etc/sysconfig/kernel
+  ```
   to make sure the kernel you tell it to install is actually set to the default
   one on bootup.
 
@@ -129,9 +129,9 @@ work?? Well that's pretty straightforward
   want to create a local.config with all of the test sections you'll be using on
   the VM's in this VM host.  This way they can each run any config.  I would
   recommend setting
-```
-RECREATE_TEST_DEV=true
-```
+  ```
+  RECREATE_TEST_DEV=true
+  ```
   for each config section so that `TEST_DEV` matches the configuration you need.
 - **Create a no password SSH key to install into the VMs.**  This will allow the
   VM host to run commands and such via scripts.
