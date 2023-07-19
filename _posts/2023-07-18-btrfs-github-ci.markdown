@@ -250,6 +250,7 @@ different between the x86 and ARM machine.  The rest is just the typical "build
 the kernel" steps.
 
 ```
+{% raw %}
   deploy:
     runs-on: [self-hosted, linux, x64, vmhost]
     needs: build
@@ -263,6 +264,7 @@ the kernel" steps.
       run: update-xfstests.sh ${{ matrix.vm }}
     - name: update kernel
       run: update-kernel.sh ${{ matrix.vm }} ${{ github.workspace }}
+{% endraw %}
 ```
 
 This runs the deploy on each of the VM's controlled by the x86 vmhost, you can
@@ -275,6 +277,7 @@ to boot before completing, this is important because you want the VM able to
 take the next set of jobs.
 
 ```
+{% raw %}
   test:
     runs-on: [self-hosted, linux, x64, vm]
     needs: deploy
@@ -293,6 +296,7 @@ take the next set of jobs.
       if: success() || failure()
       with:
         report_paths: /root/fstests/results/${{ matrix.config_name }}/result.xml
+{% endraw %}
 ```
 This is the bread and butter.  We have fstests checked out in /root/fstests,
 and the local.config already exists with section names that match `config_name`.
