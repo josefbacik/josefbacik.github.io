@@ -249,8 +249,8 @@ copies the kernel's `.config` into place so it can be built.  This is obviously
 different between the x86 and ARM machine.  The rest is just the typical "build
 the kernel" steps.
 
-```
 {% raw %}
+```
   deploy:
     runs-on: [self-hosted, linux, x64, vmhost]
     needs: build
@@ -264,8 +264,8 @@ the kernel" steps.
       run: update-xfstests.sh ${{ matrix.vm }}
     - name: update kernel
       run: update-kernel.sh ${{ matrix.vm }} ${{ github.workspace }}
-{% endraw %}
 ```
+{% endraw %}
 
 This runs the deploy on each of the VM's controlled by the x86 vmhost, you can
 see in the actual file there's another version of this for the ARM system that
@@ -276,8 +276,8 @@ and then install the kernel onto the VM's.  `update-kernel.sh` waits for the VM
 to boot before completing, this is important because you want the VM able to
 take the next set of jobs.
 
-```
 {% raw %}
+```
   test:
     runs-on: [self-hosted, linux, x64, vm]
     needs: deploy
@@ -296,8 +296,8 @@ take the next set of jobs.
       if: success() || failure()
       with:
         report_paths: /root/fstests/results/${{ matrix.config_name }}/result.xml
-{% endraw %}
 ```
+{% endraw %}
 This is the bread and butter.  We have fstests checked out in /root/fstests,
 and the local.config already exists with section names that match `config_name`.
 We run fstests with the wrapper, we have an EXCLUDE file in our fstests git tree
