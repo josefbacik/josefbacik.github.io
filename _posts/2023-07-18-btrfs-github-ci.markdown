@@ -22,7 +22,7 @@ around 18 hours to run all the tests and get results.  Of course all of the
 developers run fstests as part of their normal workflow, but this keeps us from
 missing anything as we put all the patchsets together.
 
-These VM's were setup with some random version of Fedora Rawhide arounnd Fedora
+These VM's were setup with some random version of Fedora Rawhide around Fedora
 30, so I haven't been able to update them and they sometimes break.
 Additionally I'm the only one who can touch the machines, and the results are
 saved in a git tree, parsed and uploaded to my VPS machine so we can keep track
@@ -210,6 +210,100 @@ int main(int argc, char **argv)
         return execvp(argv[1], argv+1);
 }
 ```
+# ci.yml explanation
+
+I found the GitHub actions YML part pretty straightforward, but I'll break down
+the different parts to explain how it all works
+
+```
+on:
+  push:
+    branches: [ "master", "ci" ]
+  pull_request:
+    branches: [ "master", "ci" ]
+```
+
+Easy enough, tells us when we trigger the GitHub action.  Now keep in mind for
+our tree our `master` branch is just a mirror of Linus's tree, so the `ci.yml`
+file actually only exists in the `ci` branch, so you have to do the PR against
+that branch for it to work.
+
+```
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64, vmhost]
+    steps:
+    - uses: actions/checkout@v3
+    - name: copy system config
+      run: copy-config.sh ${{ github.workspace }}
+    - name: make olddefconfig
+      run: make olddefconfig
+    - name: make
+      run: make -j32
+```
+
+This is `build`, `build-arm` is the same thing but specifies the ARM machine,
+this is how you tell it which self hosted runner to use.  The `uses` part is the
+built in `git checkout` action, `copy-config.sh` is local to the vm host and
+copies the kernel's `.config` into place so it can be built.  This is obviously
+different between the x86 and ARM machine.  The rest is just the typical "build
+the kernel" steps.
+
+```
+  deploy:
+    runs-on: [self-hosted, linux, x64, vmhost]
+    needs: build
+    strategy:
+      matrix:
+        vm: [xfstests5, xfstests6, xfstests7, xfstests8, xfstests9, xfstests10]
+    steps:
+    - name: update btrfs-progs
+      run: update-btrfs-progs.sh ${{ matrix.vm }}
+    - name: update xfstests
+      run: update-xfstests.sh ${{ matrix.vm }}
+    - name: update kernel
+      run: update-kernel.sh ${{ matrix.vm }} ${{ github.workspace }}
+```
+
+This runs the deploy on each of the VM's controlled by the x86 vmhost, you can
+see in the actual file there's another version of this for the ARM system that
+has different VM names.  Each of these scripts are in my virt-scripts, though
+the update-kernel.sh is different on ARM to do the shutdown dance as described
+above.  We update btrfs-progs in each VM from git, do the same with xfstests,
+and then install the kernel onto the VM's.  `update-kernel.sh` waits for the VM
+to boot before completing, this is important because you want the VM able to
+take the next set of jobs.
+
+```
+  test:
+    runs-on: [self-hosted, linux, x64, vm]
+    needs: deploy
+    defaults:
+      run:
+        working-directory: /root/fstests
+    strategy:
+      fail-fast: false
+      matrix:
+        config_name: [btrfs_normal, btrfs_compress, btrfs_holes_spacecache, btrfs_holes_spacecache_compress, btrfs_block_group_tree]
+    steps:
+    - name: run xfstests
+      run: ./unfuck-signal ./check -E EXCLUDE -R xunit -s ${{ matrix.config_name }} -g auto
+    - name: generate report
+      uses: mikepenz/action-junit-report@v3
+      if: success() || failure()
+      with:
+        report_paths: /root/fstests/results/${{ matrix.config_name }}/result.xml
+```
+This is the bread and butter.  We have fstests checked out in /root/fstests,
+and the local.config already exists with section names that match `config_name`.
+We run fstests with the wrapper, we have an EXCLUDE file in our fstests git tree
+to exclude any flakey tests so we can get nice clean runs.  We're using the
+option that generates an xUnit xml results file.  I'm using the
+`action-junit-report` thing because it was the only thing I could find that
+would properly parse our silly xUnit format.
+
+All in all relatively straightforward, honestly this was the easiest part of
+this whole endeavour.
 
 # Conclusion
 
