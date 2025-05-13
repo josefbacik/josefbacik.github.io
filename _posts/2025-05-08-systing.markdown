@@ -103,15 +103,11 @@ including how to use `USDT`'s, `uprobes`, and `perf` events.
 From there you can load the `trace.pb` file into a `perfetto` UI instance. I've
 included a few screenshots of what this looks like below.
 
-![A screenshot of the CPU view](/docs/assets/perfetto-cpus.png "The main CPU
-view")
+![A screenshot of the CPU view](/docs/assets/perfetto-cpus.png "The main CPU view")
 
-![A screenshot of the process view](/docs/assets/perfetto-threads.png "The main
-process view")
+![A screenshot of the process view](/docs/assets/perfetto-threads.png "The main process view")
 
-![A screenshot of the CPU view with a
-flamegraph](/docs/assets/perfetto-cpus-flamegraph.png "The thread view with a
-flamegraph")
+![A screenshot of the CPU view with a flamegraph](/docs/assets/perfetto-flamegraph.png "The thread view with a flamegraph")
 
 # Future plans
 
