@@ -21,9 +21,10 @@ scripts, and trying to reason about what could possibly be happening in the
 application.
 
 `systing` is an attempt to build a tool that can make me faster at debugging
-things, and hopefully help you too.
+things, and hopefully help you too. It generates a trace that you can load into
+`perfetto` and visualize the whole system.
 
-# `perfetto`
+# Wait, what's `perfetto`?
 
 `systing` is only half of the solution, the other half is `perfetto`.  There's
 actually two parts to `perfetto`, the `perfetto` daemon, and the `perfetto` UI.
