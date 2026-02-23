@@ -1,0 +1,153 @@
+---
+layout: post
+title: "Introducing systing 1.0"
+date: 2026-02-23 12:00:00 -400
+categories: kernel systing debugging
+---
+
+# Introducing `systing` 1.0
+
+`systing` is an eBPF-based tracing tool that I've been writing to be a turnkey
+solution for debugging complex problems in Linux. You can read my [previous
+post]({% post_url 2025-05-08-systing %}) about what `systing` is and
+why I developed it. I also gave a slightly [chaotic
+talk](https://www.youtube.com/watch?v=XLLWg3T7A-s) about it at All Systems Go
+about 6 months ago.
+
+Today I've released `systing` 1.0, which is a pretty big milestone for the tool
+and marks a shift in its identity and how I've been using it over the last 3
+months.
+
+# `systing's` original core identity
+
+`systing` started as a tool to generate perfetto traces of the system, with a
+focus on recording all of the data I normally wanted when debugging a problem,
+and putting it all in one place where I could easily visualize it and analyze
+it. The other main focus was putting all events into a timeline. Oftentimes
+tools like `perf` or `bpftrace` are about aggregating the data, and this can be
+misleading for applications that do several things over a period of time, making
+it difficult to correlate different events and understand the interactions
+between them.
+
+This was a pretty big leap forward for my ability to debug issues. A lot of the
+`sched_ext` developers used it because of how easy it made visualizing scheduler
+interactions on the system.
+
+However, there are a few problems/complaints that I've run into since developing
+`systing`.
+
+First, there's entirely too much data in the trace, and it can be overwhelming to
+look at. This is especially true for people who aren't used to looking at
+perfetto traces.
+
+Secondly, there's some data that is difficult to visualize. For example, the
+interaction of the application with the network. Half of networking happens in
+the context of the application, and half happens in the context of the kernel.
+Visualizing this is messy and still a very manual process.
+
+# `systing` 1.0's new AI identity
+
+A dream that I've had since I started developing `systing` was to have a set of
+scripts that I could use to analyze trace data and give me a report of what was
+happening. The idea being that as I found more patterns to look for, I
+would write helper scripts to detect these kinds of problems,
+making it easier to get from trace to root cause.
+
+The work I've done in the last 3 months has been focused on making this vision a
+reality, with one minor exception — I'm not creating scripts.
+
+First, I've added an option to generate DuckDB databases instead of perfetto
+traces. This allows me to use SQL to query the data, which gives us a lot more
+flexibility. Perfetto has tooling to convert traces into sqlite, but it is
+very slow for large traces. DuckDB is much faster for queries, and allows me to
+query the data directly without needing to convert it first.
+
+Second, I wrote an MCP for Claude Code to analyze `systing` DuckDB traces.
+Instead of writing scripts that I need to maintain, Claude Code can analyze data
+on the fly and answer questions in real time about the data.
+
+# A case study: improving performance of a networking application
+
+Recently there was a report of a networking application that wasn't able to
+achieve expected speeds with their transfers. I took their reproducer, ran it
+with `systing`, and then asked Claude Code to analyze the trace with the code.
+
+Claude quickly identified some internal lock contention that existed in the
+Rust library they were using. Claude suggested a fix which reduced the transfer
+time from ~12 seconds to ~8 seconds.
+
+We re-ran `systing` again and found there was a problem where we were
+decompressing in the same thread that was doing the networking transfers. Claude
+fixed this, we got the transfer time down to ~4 seconds.
+
+The final problem was that we were using small buffers for the transfers and
+this added quite a bit of overhead, as well as cycling the buffers. Claude fixed
+this as well and got our transfers down to ~2 seconds. This was about an hour's
+worth of work.
+
+# A case study: debugging a performance regression in production
+
+With the localized reproducer running 6x faster, we deployed it into production
+for testing. Unfortunately, we saw the transfer times jump to 24 seconds.
+
+I recorded a trace of the code on the production machine and asked Claude to
+compare it against the trace I had from my fast local run.
+
+It immediately identified that the production machine was spending a huge amount
+of time in a `kretprobe` on a hot function in the networking path. `systing`
+records the kernel of the machine it was recorded on, so Claude immediately
+identified the difference in kernel versions, production using 6.6 and my
+machine using 6.12.
+
+One of the security tools hooks into a very hot networking function with a
+`kretprobe`, and those probes are significantly more expensive in 6.6 than in
+6.12. My changes made the code faster, but in the production environment it had
+made it worse because suddenly we were able to do a lot more networking
+operations per second, and thus the overhead of `kretprobe` was much higher,
+slowing everything down.
+
+This is the style of problem that previously would have taken me several
+hours. Figuring out the kernel difference wasn't difficult, but tracing it back
+to the specific security application, their eBPF hook, and the location of the
+hook would have been a very manual process. The majority of the debugging time
+was spent just recording the trace in production — the actual analysis took less
+than 5 minutes to reach a root cause.
+
+Migrating the jobs to a newer kernel resulted in the 2-second transfers we had
+been seeing in testing.
+
+# How do I use the new features?
+
+First, set up your Claude Code environment to use the `systing-analyze` MCP.
+
+```
+$ ./scripts/setup_mcp.sh
+```
+
+Then use `systing` as you normally would, but change the output format.
+
+```
+$ systing --duration 60 --output trace.duckdb
+```
+
+If you want to view your trace in perfetto, you can convert it with:
+
+```
+$ systing-util convert --output trace.pb trace.duckdb
+```
+
+In order to analyze your trace with Claude Code, you can prompt it with:
+
+```
+> Analyze the systing trace in trace.duckdb, and tell me if you see any
+  potential problems in the trace, focusing on the application's interaction with the network.
+```
+
+# Conclusion
+
+Using Claude Code to analyze `systing` traces has been a game changer for my
+debugging workflow. `systing` was always a "playground" tool for me to explore
+different methods of visualizing and analyzing system behavior, and this latest
+evolution has been the closest thing to what I've always had in my head of the
+perfect tool. I'm excited to continue walking down this path and discover new
+ways I can improve the tooling to make my job easier.
